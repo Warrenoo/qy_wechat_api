@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 require 'active_support/all'
-require "rest-client"
+require "typhoeus"
 require "carrierwave"
 require 'yajl/json_gem'
 
@@ -29,14 +29,24 @@ module QyWechatApi
     def http_get_without_token(url, params={})
       logger.info("url: #{url}--- params: #{params}")
       get_api_url = ENDPOINT_URL + url
-      load_json(RestClient.get(get_api_url, params: params))
+      response = Typhoeus.get(get_api_url, params: params)
+      if response.success?
+        load_json(response.body)
+      else
+        logger.error("response fail!")
+      end
     end
 
     def http_post_without_token(url, payload={}, params={})
       logger.info("url: #{url}-- payload: #{payload}-- params: #{params}")
       post_api_url = ENDPOINT_URL + url
       payload = JSON.dump(payload) if !payload[:media].is_a?(File)
-      load_json(RestClient.post(post_api_url, payload, params: params))
+      response = Typhoeus.post(post_api_url, body: payload, params: params)
+      if response.success?
+        load_json(response.body)
+      else
+        logger.error("response fail!")
+      end
     end
 
     # return hash
